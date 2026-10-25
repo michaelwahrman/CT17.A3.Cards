@@ -1,0 +1,117 @@
+<!doctype html><html><head><meta charset="utf-8"><title>CT17.A3.Cards</title>
+<style>body{font-family:Georgia,serif;max-width:860px;margin:40px auto;padding:0 16px;line-height:1.55;background:#faf7ef;color:#222}code,pre{background:#eee6d3;border-radius:4px}pre{padding:10px;overflow:auto}h1,h2,h3{color:#5a3e12}blockquote{color:#555;border-left:3px solid #c9b48a;margin-left:0;padding-left:12px}</style></head><body>
+<h1>CT17.A3.Cards — context file</h1>
+<p>Point a later chat at this file to resume the CT17 series (next: CT17.A4.Cards).
+Previous: <code>C:\Users\micha\Downloads\claude\CT17.A2.Cards\</code> (its <code>.md</code> holds the A1/A2 history and card-art notes).</p>
+<h2>What it is</h2>
+<p>Browser-based WebGL / three.js card games. A1 = <strong>Klondike</strong>, A2 = click-to-move, A3 = <strong>FreeCell</strong>, a game switch, and video recording.
+Open <code>index.html</code> directly (double-click works; no server needed, and nothing is loaded from the internet).</p>
+<h2>Prompts</h2>
+<blockquote>
+<p>A1: browser WebGL three.js Klondike; Deal New Game button; Next card / next three cards; number of deck uses (default 3);
+audio for laying out the cards and moving one; prototypes of K Q J A in <code>C:\Users\micha\Downloads\claude\images\card_prototypes</code>
+A2: when you click on a card, if there is a move it can make, it should make it. If it can put cards onto the top position, it should.
+A3: Please add the game "FreeCell", a button at the top to switch between games, and a button to record to video.
+(A3, mid-build) Whenever I ask for the feature to record video, use the same mechanism used before that captures the highest resolution and audio.</p>
+</blockquote>
+<h2>Changes in A3</h2>
+<h3>Game switch</h3>
+<ul>
+<li><strong>Klondike | FreeCell</strong> segmented button at the top (key <strong>G</strong> toggles). The cards are swept together into the new game's deck spot,
+  shuffled and dealt into the new layout. The choice is remembered (localStorage <code>CT17.game</code>).</li>
+<li>Controls that only apply to one game are shown only for that game (<code>.only-klondike</code> / <code>.only-freecell</code> in <code>index.html</code>):
+  Klondike: Next Card, Draw 1/3, Deck uses. FreeCell: Game #, Auto-play.</li>
+<li>Title, splash, help and status bar follow the game.</li>
+</ul>
+<h3>FreeCell (<code>js/games/freecell.js</code>)</h3>
+<ul>
+<li>Standard rules. There are 4 free cells (top left), 4 foundations (top right) and 8 columns, all 52 cards dealt face up.
+  Columns build down in alternating colours; <strong>any</strong> card may go to an empty column.</li>
+<li><strong>Microsoft deals</strong>: Game #1–#32000 use the Windows FreeCell LCG and deal, so the layouts are identical. This was checked:
+  #1 starts <code>JD 2D 9H JC 5D 7H 7C 5H / KD KC 9S 5S AD QC KH 3H</code> and #617 starts <code>7D AD 5C 3S 5S 8C 2D AH</code>.
+  Deal New Game picks a random number; type a number in <strong>Game #</strong> and press Enter for that deal. The status bar shows Game #.</li>
+<li><strong>Supermove</strong>: a run may move at once if it could be done one card at a time: (empty free cells + 1) × 2^(empty columns).
+  The target being an empty column doesn't count as one of those empty columns. The status bar shows "Free cells n · move up to k".</li>
+<li><strong>Click (A2 rule)</strong>: the card moves to a foundation, else onto a column card, else (single card) to a free cell, else to an empty column.
+  Clicking inside a valid run moves the run. Free-cell cards click to foundation or column. If no move exists, a "nope" sound plays. Drag still works.</li>
+<li><strong>Auto-play</strong> (toggle, default on): after each move, cards that are no longer needed go up to the foundations.
+  "Safe" means rank ≤ 2, or both opposite-colour foundations already have rank − 1. These auto-moves share the undo step of
+  the move that caused them (<code>move(..., {noHistory:true})</code>), so one Undo takes back the move and its auto-plays.</li>
+<li>Auto-finish starts when every column runs downhill to its top card. Then come the win fanfare, the cascade and "You Won!" (with the Game #).</li>
+<li>Dealing: the deck waits face down in the middle of the table (hidden pile <code>deck</code>). The 52 cards fly out row by row and flip face up in flight.</li>
+</ul>
+<h3>Video recording: the same mechanism as CT54.A6 → CT55.A7 → CT40.A12</h3>
+<ul>
+<li><strong>● Record</strong> button (key <strong>V</strong>). Press again (<strong>■ Stop</strong>) and the MP4 <strong>downloads</strong> as <code>CT17.A3.Cards_YYYYMMDD_HHMMSS.mp4</code>.
+  No ffmpeg, no server, no batch file.</li>
+<li><code>js/rec.js</code> is CT40.A12.Solari.rec.js unchanged except that its global is renamed <code>CT17Rec</code>. It encodes with WebCodecs and muxes with mp4-muxer 5.2.1 (<code>js/lib/</code>, MIT).
+  It tries constant-quality software H.264 first, then H.264 profiles, then VP9; each must encode a test frame. It uses AAC sound, else Opus.
+  URL options: <code>?q=18</code> (lower = sharper), <code>?mbps=</code>, <code>?encoder=hw</code>.</li>
+<li><strong>Resolution</strong>: the table canvas at its real device-pixel size (rounded to even numbers, up to 3840×2160).
+  The movie shows the 3D table, not the HTML top bar or status bar. A caption in the lower left shows game, Game #, moves and time,
+  and the "You Won!" banner is drawn into the movie when it shows.</li>
+<li><strong>Speed</strong>: new <code>js/clock.js</code>. Every tween, deal timer, auto-play/auto-finish step and the game timer runs on <code>CT17.clock</code> (no more
+  <code>performance.now()</code>/<code>setTimeout</code> for game timing). While recording, the clock is the movie's clock: each drawn frame advances it
+  exactly 1/60 s and becomes movie frame i at i/60 s. It never runs ahead of real time. If the encoder falls behind, the <em>screen</em>
+  slows and the movie still plays at normal speed. On Stop the clock continues smoothly in wall time.</li>
+<li><strong>Sound</strong>: <code>js/audio.js</code> now writes every sound against an env <code>{ctx, master, noiseBuf}</code>. Live, sounds go to the speakers.
+  While recording, each sound is also logged with its movie time. At Stop the log is rendered again with the same synth in an
+  <code>OfflineAudioContext</code> (48 kHz stereo, exactly as long as the picture) and added to the movie. Muted sound gives a silent movie.</li>
+<li>The status bar shows <code>● REC m:ss · W×H 60 fps · codec · sound AAC/Opus</code> while recording, then where the file was saved.</li>
+<li>The encoder for the current window size is probed in the background 1.5 s after load, so Record starts at once.</li>
+</ul>
+<h3>Checked in headless Chromium in the cloud (2026-10-19)</h3>
+<ul>
+<li>Both games deal with 52 cards. Real mouse clicks on Klondike and FreeCell cards made their moves. The game switch works.
+  Microsoft deal #1 matches. Undo and the supermove limit work, auto-finish wins, and there were no page errors.</li>
+<li>Recording on a machine drawing only ~5 fps (software GL) took 42 s of real time to draw a deal. The movie came out at
+  960×484, a constant 60 fps, 4.18 s long, with the deal at its normal 3.95 s speed and an Opus sound track of matching length,
+  max −8 dB. Throughput on a real GPU wasn't measured there. The user tests that on their own machine.</li>
+<li><code>tests/test_ct17_a3.js</code> (Playwright) is the self-test: <code>node tests/test_ct17_a3.js [outdir]</code>.
+  Its live-vs-movie deal timing and frame-count assertions were still being tightened when testing was handed to the user,
+  so expect those two to need adjusting on a slow machine.</li>
+</ul>
+<h2>Features from A1/A2 (unchanged)</h2>
+<ul>
+<li>Klondike: Deal New Game (D) sweeps, shuffles and deals 28 cards in the traditional order. Next Card / Next 3 Cards / Turn Deck Over /
+  Deck Used Up (Space/N or click the stock). Draw 1/3 can change at any time. Deck uses 1–5 or Unlimited, default 3.</li>
+<li>Undo (U / Ctrl+Z / Backspace, 500 deep). Dragging; single click = best move (A2). Face-down cards turn over automatically.
+  Auto-finish, the win cascade, moves and timer. Settings persist. All sounds are synthesized (snap, slide, flip, riffle, nope, chime, win).</li>
+<li>Card art from the prototypes (<code>tools/prep_art.py</code> → <code>art/</code>, data-URLs in <code>art/art.js</code>); the rest is drawn in <code>js/cardart.js</code>.
+  A3 adds two slot drawings: <code>freecell</code> (open diamond, "free") and <code>tableau-any</code> (plain outline, any card).</li>
+</ul>
+<h2>Files</h2>
+<pre><code>index.html             top page; classic &lt;script&gt; tags (no ES modules, so file:// works)
+css/style.css          brass/dark UI (+ A3: game switch, Record button, Game # input)
+js/three.min.js        three.js r159 UMD, local; LICENSE beside it
+js/lib/mp4-muxer.5.2.1.js  MP4 muxer (MIT), local
+js/clock.js            A3: app/movie clock + timers
+art/art.js             generated data-URL art
+js/cardart.js          canvas drawing of faces/back/slots/shadow
+js/audio.js            synth; A3: env-based, logging, offline render
+js/games/klondike.js   Klondike rules (A3: columns/deckPile/hasStock fields, move opts)
+js/games/freecell.js   A3: FreeCell rules + Microsoft deal
+js/rec.js              encoder (from CT40.A12)
+js/recorder.js         A3: Record button logic: frame pacing, compositing + caption, sound, download
+js/view.js             TableView (A3: any column count, setGame(), CT17.clock, recorder hook in the frame loop)
+js/main.js             controller (A3: game switch, FreeCell flow/auto-play, Record)
+tools/prep_art.py      art preprocessing
+tests/test_ct17_a3.js  Playwright self-test
+</code></pre>
+<h2>Architecture notes (for adding games)</h2>
+<ul>
+<li>Game module shape: <code>key</code>, <code>name</code>, <code>columns</code> (layout width), <code>deckPile</code> (where the deck sits before a deal; may be a
+  <code>hidden:true</code> pile), <code>hasStock</code>, <code>pileSpecs</code> (<code>{id, kind, col, row, fan:'stack'|'waste'|'down', hidden?}</code>), <code>cards</code>,
+  <code>state.piles</code>, <code>newGame(arg)</code>, <code>dealOrder</code>, <code>canPickUp</code>, <code>canDrop</code>, <code>move(from,i,to,opts)</code> → <code>{flipped}</code>, <code>draw()</code>, <code>autoTarget()</code>,
+  <code>undo()</code>, <code>isWon()</code>, <code>canAutoFinish()</code>, <code>nextFinishMove()</code>, <code>recyclesLeft()</code>. Optional: <code>safeAutoMove()</code> (auto-play).</li>
+<li>Both games use the same 52 card ids (suit 0♠ 1♥ 2♦ 3♣, id = suit×13 + rank − 1), so the view keeps one set of card meshes and
+  <code>view.setGame(game, true)</code> only rebuilds the slots. The controller then gathers and deals the cards with animation.</li>
+<li>Slot kinds: stock, stock-empty, waste, foundation, tableau (K), freecell, tableau-any. Hidden piles have no slot.</li>
+<li>Anything timed must use <code>CT17.clock.now()</code> / <code>CT17.clock.after()</code>, or it will be wrong in movies.</li>
+</ul>
+<h2>Ideas for later versions</h2>
+<ul>
+<li>Spider, Pyramid, Golf. A FreeCell solver/hint, statistics per game, Vegas scoring for Klondike.</li>
+<li>Record the HTML bars too (they are not in the movie now).</li>
+</ul>
+</body></html>

@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CT17 Cards</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header id="bar">
+  <div class="brand"><span class="suit">♠</span> CT17 Cards <span class="game" id="brandGame">Klondike</span></div>
+  <div class="group">
+    <div id="gameSeg" class="seg" title="Switch game (G)"><button data-game="klondike">Klondike</button><button data-game="freecell">FreeCell</button></div>
+  </div>
+  <div class="group">
+    <button id="btnDeal" class="primary" title="Deal a new game (D)">Deal New Game</button>
+    <button id="btnNext" class="only-klondike" title="Turn cards from the stock (Space)">Next Card</button>
+    <button id="btnUndo" title="Undo (Ctrl+Z / U)">Undo</button>
+  </div>
+  <div class="group only-freecell">
+    <label for="gameNum">Game #</label>
+    <input id="gameNum" type="number" min="1" max="32000" title="Microsoft FreeCell deal number 1–32000 (type one and press Enter)">
+    <button id="btnAuto" class="toggle" title="Cards no longer needed go up to the foundations by themselves">Auto-play</button>
+  </div>
+  <div class="group only-klondike">
+    <label>Draw</label>
+    <div id="drawSeg" class="seg"><button data-n="1">1</button><button data-n="3">3</button></div>
+    <label for="selPasses">Deck uses</label>
+    <select id="selPasses" title="How many times you may go through the deck">
+      <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+      <option value="4">4</option><option value="5">5</option><option value="0">Unlimited</option>
+    </select>
+  </div>
+  <div class="group">
+    <button id="btnRec" title="Record a movie with sound (V); press again to stop and download the MP4">● Record</button>
+    <button id="btnSound" title="Sound on/off">♪ Sound</button>
+    <input id="volume" type="range" min="0" max="1" step="0.05" title="Volume">
+    <button id="btnHelp" title="How to play (H)">?</button>
+  </div>
+</header>
+
+<main id="stage"></main>
+
+<footer id="status">
+  <span id="stPass">Pass 1 of 3</span><span id="stStock">Stock 24</span><span id="stMoves">Moves 0</span><span id="stTime">0:00</span><span id="stRec"></span>
+</footer>
+
+<div id="loading">Loading…</div>
+
+<div id="splash" class="overlay">
+  <div class="panel">
+    <div class="title" id="splashTitle">Klondike</div>
+    <div class="sub">CT17 Cards</div>
+    <button id="btnStart" class="primary big">Deal the Cards</button>
+    <div class="hint">Sound is synthesized live — turn your speakers up.</div>
+  </div>
+</div>
+
+<div id="win" class="overlay">
+  <div class="panel">
+    <div class="title">You Won!</div>
+    <div class="sub" id="winStats"></div>
+    <button id="btnAgain" class="primary big">Deal Again</button>
+  </div>
+</div>
+
+<div id="help" class="overlay">
+  <div class="panel help">
+    <div class="title small">How to play</div>
+    <div class="only-klondike"><b>Klondike</b>
+    <ul>
+      <li>Build the four foundations (top right) up by suit from Ace to King.</li>
+      <li>In the seven columns, build down in alternating colours. Only a King may go into an empty column.</li>
+      <li><b>Click</b> a face-up card (or the top of a run) and it makes its best move: up to a foundation if it can, otherwise onto a column. <b>Drag</b> to choose the place yourself.</li>
+      <li><b>Next Card</b>, Space, or a click on the stock turns 1 or 3 cards (Draw 1 / 3).</li>
+      <li><b>Deck uses</b> is how many times you may go through the stock (default 3). When the stock is empty, Next turns the deck over.</li>
+      <li>When every card is face up and the stock is empty, the game finishes itself.</li>
+    </ul></div>
+    <div class="only-freecell"><b>FreeCell</b>
+    <ul>
+      <li>All 52 cards are dealt face up into eight columns. Build the four foundations (top right) up by suit from Ace to King.</li>
+      <li>The four <b>free cells</b> (top left) each hold one card. In the columns, build down in alternating colours; <b>any</b> card may go into an empty column.</li>
+      <li>You may move a run of cards at once if there is room to do it one card at a time: up to (free cells + 1) × 2<sup>empty columns</sup>.</li>
+      <li><b>Click</b> a card and it makes its best move: foundation, else onto a column, else a free cell, else an empty column. <b>Drag</b> to choose yourself.</li>
+      <li><b>Auto-play</b> sends cards that are no longer needed up to the foundations by themselves (one Undo takes back your move and them).</li>
+      <li><b>Game #</b> — the classic Microsoft deals 1–32000 (same layouts as Windows FreeCell). Type a number and press Enter.</li>
+    </ul></div>
+    <ul>
+      <li><b>Klondike / FreeCell</b> at the top switches game (G). <b>● Record</b> (V) records a movie with sound at the size of the table on your screen; press again to stop — the MP4 downloads.</li>
+      <li>Keys: Space/N next · U or Ctrl+Z undo · D deal · G switch game · V record · H help</li>
+    </ul>
+    <div class="hint">Click anywhere to close</div>
+  </div>
+</div>
+
+<script src="js/three.min.js"></script>
+<script src="js/lib/mp4-muxer.5.2.1.js"></script>
+<script src="js/clock.js"></script>
+<script src="art/art.js"></script>
+<script src="js/cardart.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/games/klondike.js"></script>
+<script src="js/games/freecell.js"></script>
+<script src="js/rec.js"></script>
+<script src="js/recorder.js"></script>
+<script src="js/view.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
